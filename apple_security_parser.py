@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from lxml import etree
+import json
+import csv
 
 dir = {
     "target": "",
@@ -11,7 +13,8 @@ dir = {
 
 dir_list = []
 
-url = 'https://support.apple.com/en-us/HT213938'
+sub = 'HT213938'
+url = f'https://support.apple.com/en-us/{sub}'
 
 response = requests.get(url)
 
@@ -31,9 +34,9 @@ if response.status_code == 200:
             tmp_dir["target"] = target
             tmp_dir["CVE"] = []
 
-        xpath2 = f'//*[@id="sections"]/div[3]/div/p[{idx}]'
-        if dom.xpath(xpath2) != [] and dom.xpath(xpath2)[0].text != None:
-            p_tag = dom.xpath(xpath2)[0].text
+        xpath2 = f'//*[@id="sections"]/div[3]/div/p[{idx}]/text()'
+        if dom.xpath(xpath2) != []: # and dom.xpath(xpath2)[0].text != None:
+            p_tag = dom.xpath(xpath2)[0] # .text
         
             if p_tag != None:
                 if p_tag.find("Impact") != -1:
@@ -48,4 +51,10 @@ if response.status_code == 200:
 
     print(dir_list)
 
-# //*[@id="tableWraper"]/table/tbody/tr[5]/td[1]/a -> Link
+with open(f'{sub}.csv', 'w', newline='', encoding='utf-8') as csvfile:
+    fieldnames = ['target', 'Impact', 'Description', 'CVE']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+    writer.writeheader()
+    for data in dir_list:
+        writer.writerow(data)
